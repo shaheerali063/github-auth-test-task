@@ -20,7 +20,28 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:4200',
+  credentials: true
+}));
+
+// or
+
+// app.use((req, res, next) => {
+//   const allowedOrigins = req.headers.origin; // Get the requesting origin
+//   res.header('Access-Control-Allow-Origin', allowedOrigins); // Dynamically allow any origin
+//   res.header('Access-Control-Allow-Credentials', 'true'); // Allow credentials
+//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allowed methods
+//   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization'); // Allowed headers
+  
+//   // Handle preflight requests
+//   if (req.method === 'OPTIONS') {
+//     return res.sendStatus(200);
+//   }
+
+//   next();
+// });
+
 
 // Initialize Passport
 passport.use(new GitHubStrategy({
