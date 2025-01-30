@@ -10,20 +10,6 @@ const userSchema = new mongoose.Schema({
   lastSynced: { type: Date, required: true },
 });
 
-// Hash the accessToken before saving it to MongoDB
-userSchema.pre('save', async function (next) {
-  if (this.isModified('accessToken')) {
-    // Hash the token
-    this.accessToken = await bcrypt.hash(this.accessToken, 10);
-  }
-  next();
-});
-
-// Compare provided token with the hashed one
-userSchema.methods.compareAccessToken = async function (token) {
-  return bcrypt.compare(token, this.accessToken);
-};
-
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

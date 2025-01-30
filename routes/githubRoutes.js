@@ -11,4 +11,8 @@ router.get('/auth/github/callback', githubController.githubCallback);
 // Route to fetch GitHub data (after authentication)
 router.get('/user/github-data', githubController.fetchGitHubData);
 
+router.get('/check-connection', githubController.checkGitHubConnection);
+router.delete('/remove-connection', githubController.removeGitHubIntegration);
+
+
 module.exports = router;

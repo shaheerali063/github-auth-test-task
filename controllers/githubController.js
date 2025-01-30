@@ -6,34 +6,78 @@ const User = require('../models/User');
 exports.redirectToGitHub = passport.authenticate('github', { scope: ['user', 'repo', 'read:user'] });
 
 exports.githubCallback = (req, res, next) => {
-  passport.authenticate('github', { failureRedirect: '/' }, (err, user, info) => {
-    // If error occurs, handle it here
+  passport.authenticate('github', { failureRedirect: '/' }, async (err, user, info) => {
     if (err) {
       console.error('Error during authentication:', err);
       return res.status(500).send('Authentication failed due to an error.');
     }
 
-    // If user not found, handle it here
     if (!user) {
       console.error('No user found');
       return res.status(500).send('Error during GitHub authentication. User data not available.');
     }
 
-    // Log the user data from GitHub profile
-    console.log('GitHub Profile after authentication:', user);
-
-    // Log the user into the session
-    req.login(user, (loginErr) => {
+    req.login(user, async (loginErr) => {
       if (loginErr) {
         console.error('Error logging in the user:', loginErr);
         return res.status(500).send('Error during login.');
       }
 
-      // If everything is successful, redirect to the success page
+      // Store user in session
+      req.session.user = {
+        githubId: user.githubId,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        lastSynced: user.lastSynced,
+      };
+
       res.redirect('http://localhost:4200/auth/success');
     });
-  })(req, res, next);  // Manually invoke the middleware with the proper req, res, next
+  })(req, res, next);
 };
+
+
+exports.checkGitHubConnection = async (req, res) => {
+  if (!req.session.user) {
+    return res.json({ connected: false });
+  }
+
+  try {
+    const user = await User.findOne({ githubId: req.session.user.githubId });
+    if (!user) return res.json({ connected: false });
+
+    res.json({
+      connected: true,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      lastSynced: user.lastSynced,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error checking connection' });
+  }
+};
+
+
+exports.removeGitHubIntegration = async (req, res) => {
+  if (!req.session.user) return res.status(401).send('Not authenticated');
+
+  try {
+    await User.deleteOne({ githubId: req.session.user.githubId });
+
+    // Destroy session so they are fully logged out
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Error destroying session:', err);
+        return res.status(500).send('Error removing integration');
+      }
+
+      res.json({ success: true, message: 'GitHub integration removed' });
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error removing integration' });
+  }
+};
+
 
 
 // Fetch GitHub data (e.g., orgs, repos, commits, issues, etc.)
