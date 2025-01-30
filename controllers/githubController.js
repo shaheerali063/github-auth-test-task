@@ -87,23 +87,26 @@ exports.fetchGitHubData = async (req, res) => {
   }
 
   try {
-    const { accessToken } = req.session.user;
+    const user = await User.findOne({ githubId: req.session.user.githubId });
+    if (!user) return res.status(401).send('User not found');
+
+    const decryptedToken = user.getDecryptedAccessToken();
 
     // Fetch organizations
     const orgsResponse = await axios.get('https://api.github.com/user/orgs', {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${decryptedToken}` },
     });
 
     // Fetch repositories
     const reposResponse = await axios.get('https://api.github.com/user/repos', {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${decryptedToken}` },
     });
 
-    // For each repo, fetch more data (commits, pulls, issues, etc.)
+    // Fetch repo data
     const reposData = await Promise.all(reposResponse.data.map(async (repo) => {
-      const commitsResponse = await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/commits`, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const pullsResponse = await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/pulls`, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const issuesResponse = await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/issues`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const commitsResponse = await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/commits`, { headers: { Authorization: `Bearer ${decryptedToken}` } });
+      const pullsResponse = await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/pulls`, { headers: { Authorization: `Bearer ${decryptedToken}` } });
+      const issuesResponse = await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/issues`, { headers: { Authorization: `Bearer ${decryptedToken}` } });
 
       return {
         ...repo,

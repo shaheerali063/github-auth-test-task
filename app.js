@@ -1,4 +1,5 @@
 const dotenv = require('dotenv');
+dotenv.config();
 const express = require("express");
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
@@ -9,6 +10,7 @@ const cors = require("cors");
 const githubRoutes = require('./routes/githubRoutes');
 const routes = require("./routes/index");
 const User = require('./models/User');
+const { encrypt } = require('./helpers/encryption');
 
 
 dotenv.config();
@@ -29,13 +31,15 @@ passport.use(new GitHubStrategy({
 async (accessToken, refreshToken, profile, done) => {
   console.log('GitHub Profile:', profile);
   try {
+    const encryptedToken = encrypt(accessToken);
+
     const user = await User.findOneAndUpdate(
       { githubId: profile.id },
       {
         githubId: profile.id,
         username: profile.username,
         avatarUrl: profile.photos[0]?.value || '',
-        accessToken,
+        accessToken: encryptedToken,
         lastSynced: new Date(),
       },
       { upsert: true, new: true }
@@ -47,7 +51,15 @@ async (accessToken, refreshToken, profile, done) => {
 }));
 
 passport.serializeUser((user, done) => done(null, user.id));
-passport.deserializeUser((id, done) => User.findById(id, (err, user) => done(err, user)));
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+
 
 // Session handling
 app.use(session({
