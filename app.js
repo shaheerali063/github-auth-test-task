@@ -9,7 +9,7 @@ const MongoStore = require('connect-mongo');
 const cors = require("cors");
 const githubRoutes = require('./routes/githubRoutes');
 const routes = require("./routes/index");
-const User = require('./models/User');
+const GithubIntegration = require('./models/GithubIntegration');
 const { encrypt } = require('./helpers/encryption');
 
 
@@ -54,7 +54,7 @@ async (accessToken, refreshToken, profile, done) => {
   try {
     const encryptedToken = encrypt(accessToken);
 
-    const user = await User.findOneAndUpdate(
+    const user = await GithubIntegration.findOneAndUpdate(
       { githubId: profile.id },
       {
         githubId: profile.id,
@@ -74,8 +74,8 @@ async (accessToken, refreshToken, profile, done) => {
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await User.findById(id);
-    done(null, user);
+    const integration = await GithubIntegration.findById(id);
+    done(null, integration);
   } catch (err) {
     done(err, null);
   }

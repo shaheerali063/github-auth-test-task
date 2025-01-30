@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const {encrypt, decrypt} = require('../helpers/encryption')
 
-// Define User Schema
 const userSchema = new mongoose.Schema({
   githubId: { type: String, required: true, unique: true },
   username: { type: String, required: true },
@@ -11,7 +10,6 @@ const userSchema = new mongoose.Schema({
   lastSynced: { type: Date, required: true },
 });
 
-// Encrypt before saving
 userSchema.pre('save', function (next) {
   if (this.isModified('accessToken')) {
     this.accessToken = encrypt(this.accessToken);
@@ -19,11 +17,10 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-// Decrypt when retrieving
 userSchema.methods.getDecryptedAccessToken = function () {
   return decrypt(this.accessToken);
 };
 
-const User = mongoose.model('User', userSchema);
+const githubIntegration = mongoose.model('githubIntegration', userSchema);
 
-module.exports = User;
+module.exports = githubIntegration;

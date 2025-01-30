@@ -1,6 +1,6 @@
 const passport = require('passport');
 const axios = require('axios');
-const User = require('../models/User');
+const GitHubIntegration = require('../models/GithubIntegration');
 
 // Redirect to GitHub for OAuth authentication
 exports.redirectToGitHub = passport.authenticate('github', { scope: ['user', 'repo', 'read:user'] });
@@ -43,14 +43,14 @@ exports.checkGitHubConnection = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ githubId: req.session.user.githubId });
-    if (!user) return res.json({ connected: false });
+    const integration = await GitHubIntegration.findOne({ githubId: req.session.user.githubId });
+    if (!integration) return res.json({ connected: false });
 
     res.json({
       connected: true,
-      username: user.username,
-      avatarUrl: user.avatarUrl,
-      lastSynced: user.lastSynced,
+      username: integration.username,
+      avatarUrl: integration.avatarUrl,
+      lastSynced: integration.lastSynced,
     });
   } catch (err) {
     res.status(500).json({ error: 'Error checking connection' });
@@ -62,7 +62,7 @@ exports.removeGitHubIntegration = async (req, res) => {
   if (!req.session.user) return res.status(401).send('Not authenticated');
 
   try {
-    await User.deleteOne({ githubId: req.session.user.githubId });
+    await GitHubIntegration.deleteOne({ githubId: req.session.user.githubId });
 
     // Destroy session so they are fully logged out
     req.session.destroy((err) => {
@@ -87,7 +87,7 @@ exports.fetchGitHubData = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ githubId: req.session.user.githubId });
+    const user = await GitHubIntegration.findOne({ githubId: req.session.user.githubId });
     if (!user) return res.status(401).send('User not found');
 
     const decryptedToken = user.getDecryptedAccessToken();
