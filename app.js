@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const githubRoutes = require('./routes/githubRoutes');
 const routes = require("./routes/index");
+const User = require('./models/User');
 
 
 dotenv.config();
@@ -25,13 +26,14 @@ passport.use(new GitHubStrategy({
   callbackURL: process.env.GITHUB_REDIRECT_URI,
 },
 async (accessToken, refreshToken, profile, done) => {
+  console.log('GitHub Profile:', profile);
   try {
     const user = await User.findOneAndUpdate(
       { githubId: profile.id },
       {
         githubId: profile.id,
         username: profile.username,
-        email: profile.emails[0].value, // GitHub provides email in profile.emails
+        avatarUrl: profile.photos[0]?.value || '',
         accessToken,
         lastSynced: new Date(),
       },
