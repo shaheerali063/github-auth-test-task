@@ -14,5 +14,9 @@ router.get('/user/github-data', githubController.fetchGitHubData);
 router.get('/check-connection', githubController.checkGitHubConnection);
 router.delete('/remove-connection', githubController.removeGitHubIntegration);
 
+router.get('/github/collections', githubController.getCollections);
+router.get('/github/collection/:name', githubController.getCollectionData);
+
+
 
 module.exports = router;

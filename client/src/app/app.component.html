@@ -6,76 +6,66 @@
     Connect with GitHub
   </button>
 
-  <!-- Show User Info & Disconnect Button If Connected -->
+  <!-- Show User Info & Expandable Panel If Connected -->
   <div *ngIf="isConnected">
     <mat-card class="user-card">
       <img mat-card-avatar [src]="avatarUrl" alt="Avatar" />
       <mat-card-title>Connected as {{ username }}</mat-card-title>
       <mat-card-subtitle>Last synced: {{ lastSynced | date: 'medium' }}</mat-card-subtitle>
-      <mat-card-actions>
-        <button mat-raised-button color="warn" (click)="removeConnection()">Remove Connection</button>
-      </mat-card-actions>
     </mat-card>
 
-    <!-- GitHub Data Section -->
-    <mat-accordion *ngIf="githubData" class="github-data">
-      
-      <!-- Organizations -->
-      <mat-expansion-panel *ngIf="githubData.orgs.length">
+    <!-- Expandable Panel for GitHub Integration Options -->
+    <mat-accordion>
+      <mat-expansion-panel>
         <mat-expansion-panel-header>
-          <mat-panel-title>Organizations</mat-panel-title>
+          <mat-panel-title>GitHub Integration Options</mat-panel-title>
         </mat-expansion-panel-header>
-        <ul>
-          <li *ngFor="let org of githubData.orgs">{{ org.login }}</li>
-        </ul>
+
+        <!-- Remove Integration Button -->
+        <button mat-raised-button color="warn" (click)="removeConnection()">Remove Integration</button>
+
+        <!-- Active Integration Dropdown -->
+        <div class="dropdown-container">
+          <mat-form-field appearance="outline">
+            <mat-label>Active Integration</mat-label>
+            <mat-select [(value)]="activeIntegration">
+              <mat-option value="GitHub">GitHub</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Entity Dropdown (List of MongoDB Collections) -->
+        <div class="dropdown-container">
+          <mat-form-field appearance="outline">
+            <mat-label>Select Collection</mat-label>
+            <mat-select [(value)]="selectedCollection" (selectionChange)="fetchCollectionData()">
+              <mat-option *ngFor="let collection of collections" [value]="collection">
+                {{ collection }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Search Input for AG Grid -->
+        <mat-form-field appearance="outline">
+          <mat-label>Search</mat-label>
+          <input matInput (input)="onSearch($event)" placeholder="Search across all fields" />
+        </mat-form-field>
       </mat-expansion-panel>
-
-      <!-- Repositories -->
-      <mat-expansion-panel *ngIf="githubData.repos.length">
-        <mat-expansion-panel-header>
-          <mat-panel-title>Repositories</mat-panel-title>
-        </mat-expansion-panel-header>
-        
-        <mat-card *ngFor="let repo of githubData.repos" class="repo-card">
-          <mat-card-header>
-            <mat-card-title>{{ repo.name }}</mat-card-title>
-            <mat-card-subtitle>⭐ {{ repo.stargazers_count }}</mat-card-subtitle>
-          </mat-card-header>
-
-          <mat-card-content>
-            <!-- Commits -->
-            <div *ngIf="repo.commits.length">
-              <h5>Recent Commits:</h5>
-              <ul>
-                <li *ngFor="let commit of repo.commits">
-                  {{ commit.commit.message }} - <i>{{ commit.commit.author.name }}</i>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Pull Requests -->
-            <div *ngIf="repo.pulls.length">
-              <h5>Open Pull Requests:</h5>
-              <ul>
-                <li *ngFor="let pr of repo.pulls">
-                  <a [href]="pr.html_url" target="_blank">{{ pr.title }}</a>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Issues -->
-            <div *ngIf="repo.issues.length">
-              <h5>Open Issues:</h5>
-              <ul>
-                <li *ngFor="let issue of repo.issues">
-                  <a [href]="issue.html_url" target="_blank">{{ issue.title }}</a>
-                </li>
-              </ul>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </mat-expansion-panel>
-
     </mat-accordion>
+
+    <!-- AG Grid Table -->
+    <div class="ag-theme-alpine grid-container">
+      <ag-grid-angular
+        class="ag-theme-alpine"
+        style="width: 100%; height: 400px;"
+        [rowData]="rowData"
+        [columnDefs]="columnDefs"
+        [pagination]="true"
+        [paginationPageSize]="10"
+        rowModelType="clientSide"
+        (gridReady)="onGridReady($event)">
+      </ag-grid-angular>
+    </div>
   </div>
 </div>

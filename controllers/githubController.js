@@ -125,3 +125,26 @@ exports.fetchGitHubData = async (req, res) => {
     res.status(500).send('Error fetching GitHub data');
   }
 };
+
+exports.getCollections = async (req, res) => {
+  try {
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const collectionNames = collections.map(col => col.name);
+    res.json(collectionNames);
+  } catch (err) {
+    console.error('Error fetching collections:', err);
+    res.status(500).json({ error: 'Error fetching collections' });
+  }
+};
+
+exports.getCollectionData = async (req, res) => {
+  const { name } = req.params;
+  try {
+    const collection = mongoose.connection.db.collection(name);
+    const data = await collection.find({}).limit(100).toArray(); // Limit results
+    res.json(data);
+  } catch (err) {
+    console.error(`Error fetching data from collection ${name}:`, err);
+    res.status(500).json({ error: `Error fetching data from collection ${name}` });
+  }
+};
